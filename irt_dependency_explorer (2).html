@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IRT Dependency Explorer</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --line: #e5e7eb;
+      --good: #16a34a;
+      --warn: #d97706;
+      --chip: #eef2ff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) 1fr;
+      gap: 16px;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .left-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+    .search {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .cards {
+      max-height: calc(100vh - 175px);
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .flow-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: .15s ease;
+      background: #fff;
+    }
+
+    .flow-card:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+    .flow-card.active {
+      border-color: var(--primary);
+      background: linear-gradient(0deg, #fff, #f8fbff);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .chip {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: var(--chip);
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      white-space: nowrap;
+    }
+
+    .metric {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .right {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .tabs {
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 6px;
+      padding: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      font-weight: 600;
+    }
+
+    .content { padding: 14px; overflow: auto; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .h2 { font-weight: 700; margin: 0 0 10px; font-size: 17px; }
+    .label { color: var(--muted); font-size: 12px; margin-top: 12px; margin-bottom: 6px; }
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fff;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .list { margin: 0; padding-left: 18px; }
+    .list li { margin-bottom: 6px; }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .node {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .arrow { color: #94a3b8; font-weight: 700; }
+    .status-good { color: var(--good); font-weight: 600; }
+    .status-warn { color: var(--warn); font-weight: 600; }
+
+    .empty {
+      color: var(--muted);
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="panel">
+      <div class="left-head">
+        <div class="title">IRT Measure Dependency Explorer</div>
+        <div class="sub">Click any flow card to see full dependency chain, related measures, and AI-style reason in one place.</div>
+        <input id="searchInput" class="search" placeholder="Search by measure, flow, or domain" />
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section class="panel right">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="info">Info</button>
+        <button class="tab" data-tab="dependency">Dependency Flow</button>
+        <button class="tab" data-tab="related">Related Measures</button>
+      </div>
+
+      <div class="content">
+        <div class="tab-pane active" id="infoPane"></div>
+        <div class="tab-pane" id="dependencyPane"></div>
+        <div class="tab-pane" id="relatedPane"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const measureFlows = [
+      {
+        id: 'M1',
+        flowName: 'Revenue Flow',
+        measure: 'Net Revenue',
+        domain: 'Commercial',
+        formula: '(Gross Sales - Returns - Discounts)',
+        dependencies: ['Gross Sales', 'Returns', 'Discounts'],
+        usedBy: ['Contribution Margin', 'Growth %'],
+        dataSource: 'SalesFact + ReturnFact',
+        aiReason: 'Net Revenue is calculated to represent true monetized value after operational leakages (returns and trade discounts). This gives business users a realistic performance baseline instead of inflated topline numbers.',
+        confidence: 'High',
+        lastRefresh: '2026-04-16'
+      },
+      {
+        id: 'M2',
+        flowName: 'Profitability Flow',
+        measure: 'Contribution Margin',
+        domain: 'Finance',
+        formula: 'Net Revenue - Variable Cost',
+        dependencies: ['Net Revenue', 'Variable Cost'],
+        usedBy: ['CM %', 'Profit Bridge'],
+        dataSource: 'SalesFact + CostFact',
+        aiReason: 'Contribution Margin isolates earning power before fixed overheads. It is used to compare product/channel health and guide tactical price-promo decisions.',
+        confidence: 'High',
+        lastRefresh: '2026-04-16'
+      },
+      {
+        id: 'M3',
+        flowName: 'Distribution Flow',
+        measure: 'Numeric Distribution %',
+        domain: 'Channel',
+        formula: 'Active Outlets / Total Eligible Outlets',
+        dependencies: ['Active Outlets', 'Eligible Outlets'],
+        usedBy: ['Weighted Distribution', 'Reach Index'],
+        dataSource: 'OutletUniverse + SalesCoverage',
+        aiReason: 'Numeric Distribution % is calculated to show coverage breadth. It is a lead indicator for volume growth, especially in emerging channels.',
+        confidence: 'Medium',
+        lastRefresh: '2026-04-15'
+      },
+      {
+        id: 'M4',
+        flowName: 'Forecast Flow',
+        measure: 'Forecast Accuracy',
+        domain: 'Supply',
+        formula: '1 - ABS(Forecast - Actual)/Actual',
+        dependencies: ['Forecast Volume', 'Actual Volume'],
+        usedBy: ['Inventory Risk', 'Bias Index'],
+        dataSource: 'DemandPlan + Sellout',
+        aiReason: 'Forecast Accuracy is calculated to quantify planning quality. Low accuracy increases inventory and service risk, so this metric directly influences replenishment governance.',
+        confidence: 'Medium',
+        lastRefresh: '2026-04-14'
+      }
+    ];
+
+    const cardsEl = document.getElementById('cards');
+    const searchInput = document.getElementById('searchInput');
+    const tabs = document.querySelectorAll('.tab');
+    const panes = {
+      info: document.getElementById('infoPane'),
+      dependency: document.getElementById('dependencyPane'),
+      related: document.getElementById('relatedPane')
+    };
+
+    let selectedId = measureFlows[0].id;
+
+    function renderCards(list = measureFlows) {
+      cardsEl.innerHTML = list.map(item => {
+        const active = item.id === selectedId ? 'active' : '';
+        return `
+          <article class="flow-card ${active}" data-id="${item.id}">
+            <div class="card-top">
+              <div class="metric">${item.measure}</div>
+              <span class="chip">${item.domain}</span>
+            </div>
+            <div class="meta">
+              <span><strong>Flow:</strong> ${item.flowName}</span>
+              <span><strong>Depends on:</strong> ${item.dependencies.length}</span>
+              <span><strong>Used by:</strong> ${item.usedBy.length}</span>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      cardsEl.querySelectorAll('.flow-card').forEach(card => {
+        card.addEventListener('click', () => {
+          selectedId = card.dataset.id;
+          renderCards(list);
+          renderDetail(getSelected());
+          setTab('info');
+        });
+      });
+    }
+
+    function getSelected() {
+      return measureFlows.find(m => m.id === selectedId);
+    }
+
+    function renderDetail(item) {
+      if (!item) {
+        Object.values(panes).forEach(el => {
+          el.innerHTML = '<div class="empty">No measure selected.</div>';
+        });
+        return;
+      }
+
+      panes.info.innerHTML = `
+        <h2 class="h2">${item.measure}</h2>
+        <div class="box">
+          <div><strong>Flow:</strong> ${item.flowName}</div>
+          <div><strong>Domain:</strong> ${item.domain}</div>
+          <div><strong>Formula:</strong> ${item.formula}</div>
+          <div><strong>Data Source:</strong> ${item.dataSource}</div>
+          <div><strong>Last Refresh:</strong> ${item.lastRefresh}</div>
+          <div><strong>AI Confidence:</strong> <span class="${item.confidence === 'High' ? 'status-good' : 'status-warn'}">${item.confidence}</span></div>
+        </div>
+
+        <div class="label">AI-Based Why This Is Calculated</div>
+        <div class="box">${item.aiReason}</div>
+      `;
+
+      const dependencyChain = [...item.dependencies, item.measure, ...item.usedBy];
+      panes.dependency.innerHTML = `
+        <h2 class="h2">Dependency Flow: ${item.measure}</h2>
+        <div class="label">End-to-end chain</div>
+        <div class="flow">
+          ${dependencyChain.map((node, idx) => `
+            <span class="node">${node}</span>${idx < dependencyChain.length - 1 ? '<span class="arrow">→</span>' : ''}
+          `).join('')}
+        </div>
+
+        <div class="label">Input Dependencies</div>
+        <div class="box">
+          <ul class="list">
+            ${item.dependencies.map(dep => `<li>${dep}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+
+      panes.related.innerHTML = `
+        <h2 class="h2">Related Measures</h2>
+        <div class="label">Upstream (what this needs)</div>
+        <div class="box">
+          <ul class="list">${item.dependencies.map(dep => `<li>${dep}</li>`).join('')}</ul>
+        </div>
+
+        <div class="label">Downstream (what uses this)</div>
+        <div class="box">
+          <ul class="list">${item.usedBy.map(dep => `<li>${dep}</li>`).join('')}</ul>
+        </div>
+      `;
+    }
+
+    function setTab(tab) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      Object.entries(panes).forEach(([key, pane]) => pane.parentElement.querySelector(`#${key}Pane`).classList.toggle('active', key === tab));
+    }
+
+    tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const filtered = measureFlows.filter(item =>
+        [item.measure, item.flowName, item.domain, ...item.dependencies, ...item.usedBy]
+          .join(' ')
+          .toLowerCase()
+          .includes(q)
+      );
+
+      if (!filtered.some(f => f.id === selectedId) && filtered.length) selectedId = filtered[0].id;
+      renderCards(filtered);
+      renderDetail(filtered.find(f => f.id === selectedId) || null);
+    });
+
+    renderCards();
+    renderDetail(getSelected());
+  </script>
+</body>
+</html>
