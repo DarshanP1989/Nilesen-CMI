@@ -6,216 +6,73 @@
   <title>IRT Dependency Explorer</title>
   <style>
     :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-soft: #dbeafe;
-      --line: #e5e7eb;
-      --good: #16a34a;
-      --warn: #d97706;
-      --chip: #eef2ff;
+      --bg:#f6f8fc; --panel:#fff; --line:#e5e7eb; --text:#0f172a; --muted:#64748b;
+      --primary:#2563eb; --primary-soft:#dbeafe; --chip:#eef2ff; --ok:#15803d; --warn:#b45309;
     }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:16px;min-height:100vh;padding:16px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 8px rgba(15,23,42,.05)}
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, Segoe UI, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+    .left-head{padding:16px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+    .title{font-size:18px;font-weight:800}
+    .sub{font-size:13px;color:var(--muted);line-height:1.45}
+    .search{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px}
+    .cards{padding:10px;max-height:calc(100vh - 170px);overflow:auto;display:grid;gap:10px}
 
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(280px, 420px) 1fr;
-      gap: 16px;
-      min-height: 100vh;
-      padding: 16px;
-    }
+    .flow-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;transition:.15s ease}
+    .flow-card:hover{transform:translateY(-1px);border-color:#cbd5e1}
+    .flow-card.active{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+    .card-head{display:flex;justify-content:space-between;gap:10px;align-items:start}
+    .measure{font-weight:700;font-size:15px}
+    .domain{font-size:11px;padding:3px 9px;border-radius:999px;background:var(--chip);color:#3730a3;border:1px solid #c7d2fe;white-space:nowrap}
+    .muted{color:var(--muted);font-size:12px}
+    .mini{margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fafbff;font-size:12px;color:#334155}
 
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    }
+    .right{display:grid;grid-template-rows:auto 1fr;min-height:0}
+    .tabs{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+    .tab{border:1px solid var(--line);background:#fff;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+    .tab.active{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;font-weight:700}
 
-    .left-head {
-      padding: 16px;
-      border-bottom: 1px solid var(--line);
-      display: grid;
-      gap: 10px;
-    }
-
-    .title { font-size: 18px; font-weight: 700; }
-    .sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
-
-    .search {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      outline: none;
-    }
-
-    .cards {
-      max-height: calc(100vh - 175px);
-      overflow: auto;
-      padding: 10px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .flow-card {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      cursor: pointer;
-      transition: .15s ease;
-      background: #fff;
-    }
-
-    .flow-card:hover { border-color: #cbd5e1; transform: translateY(-1px); }
-    .flow-card.active {
-      border-color: var(--primary);
-      background: linear-gradient(0deg, #fff, #f8fbff);
-      box-shadow: 0 0 0 3px var(--primary-soft);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .chip {
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      background: var(--chip);
-      color: #3730a3;
-      border: 1px solid #c7d2fe;
-      white-space: nowrap;
-    }
-
-    .metric {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 12px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .right {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      min-height: 0;
-    }
-
-    .tabs {
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      gap: 6px;
-      padding: 12px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 8px;
-      padding: 8px 10px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .tab.active {
-      color: #1d4ed8;
-      border-color: #bfdbfe;
-      background: #eff6ff;
-      font-weight: 600;
-    }
-
-    .content { padding: 14px; overflow: auto; }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
-
-    .h2 { font-weight: 700; margin: 0 0 10px; font-size: 17px; }
-    .label { color: var(--muted); font-size: 12px; margin-top: 12px; margin-bottom: 6px; }
-    .box {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      background: #fff;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .list { margin: 0; padding-left: 18px; }
-    .list li { margin-bottom: 6px; }
-
-    .flow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-top: 8px;
-    }
-
-    .node {
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .arrow { color: #94a3b8; font-weight: 700; }
-    .status-good { color: var(--good); font-weight: 600; }
-    .status-warn { color: var(--warn); font-weight: 600; }
-
-    .empty {
-      color: var(--muted);
-      border: 1px dashed #cbd5e1;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 13px;
-    }
+    .content{padding:14px;overflow:auto}
+    .pane{display:none}.pane.active{display:block}
+    .h2{margin:0 0 10px;font-size:18px}
+    .section{margin-top:12px}
+    .label{font-size:12px;color:var(--muted);margin:0 0 6px}
+    .box{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-size:13px;line-height:1.5}
+    .list{margin:0;padding-left:18px}
+    .list li{margin-bottom:6px}
+    .flow-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .node{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;background:#fff}
+    .arrow{color:#94a3b8;font-weight:700}
+    .ok{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}
+    .table{width:100%;border-collapse:collapse;font-size:12px}
+    .table th,.table td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:left}
+    .table th{background:#f8fafc}
+    .empty{border:1px dashed #cbd5e1;padding:10px;border-radius:8px;color:var(--muted);font-size:13px}
   </style>
 </head>
 <body>
   <div class="layout">
     <section class="panel">
       <div class="left-head">
-        <div class="title">IRT Measure Dependency Explorer</div>
-        <div class="sub">Click any flow card to see full dependency chain, related measures, and AI-style reason in one place.</div>
-        <input id="searchInput" class="search" placeholder="Search by measure, flow, or domain" />
+        <div class="title">IRT Dependency Explorer</div>
+        <div class="sub">Original single-page explorer style retained, now enhanced with AI-based explanation for each measure card and dependency flow.</div>
+        <input id="searchInput" class="search" placeholder="Search measure, domain, dependency, business question" />
       </div>
       <div class="cards" id="cards"></div>
     </section>
 
     <section class="panel right">
-      <div class="tabs" id="tabs">
+      <div class="tabs">
         <button class="tab active" data-tab="info">Info</button>
-        <button class="tab" data-tab="dependency">Dependency Flow</button>
+        <button class="tab" data-tab="flow">Dependency Flow</button>
         <button class="tab" data-tab="related">Related Measures</button>
       </div>
-
       <div class="content">
-        <div class="tab-pane active" id="infoPane"></div>
-        <div class="tab-pane" id="dependencyPane"></div>
-        <div class="tab-pane" id="relatedPane"></div>
+        <div class="pane active" id="infoPane"></div>
+        <div class="pane" id="flowPane"></div>
+        <div class="pane" id="relatedPane"></div>
       </div>
     </section>
   </div>
@@ -224,106 +81,120 @@
     const measureFlows = [
       {
         id: 'M1',
-        flowName: 'Revenue Flow',
         measure: 'Net Revenue',
+        flowName: 'Revenue Flow',
         domain: 'Commercial',
-        formula: '(Gross Sales - Returns - Discounts)',
-        dependencies: ['Gross Sales', 'Returns', 'Discounts'],
-        usedBy: ['Contribution Margin', 'Growth %'],
-        dataSource: 'SalesFact + ReturnFact',
-        aiReason: 'Net Revenue is calculated to represent true monetized value after operational leakages (returns and trade discounts). This gives business users a realistic performance baseline instead of inflated topline numbers.',
+        formula: 'Gross Sales - Returns - Discounts',
+        dependencies: ['Gross Sales','Returns','Discounts'],
+        usedBy: ['Contribution Margin','Growth %'],
+        dependencyReason: {
+          'Gross Sales': 'Creates the starting topline value.',
+          'Returns': 'Removes reversed or refunded value from sales.',
+          'Discounts': 'Removes trade/consumer concessions to show true realization.'
+        },
+        aiWhyCalculated: 'Calculated to show realized business value instead of gross billing. Decision makers use this to judge real commercial performance.',
+        aiBusinessQuestion: 'How much value did we truly realize after leakage?',
+        aiImpactIfMissing: 'Profitability and growth reporting will be overstated and misleading.',
         confidence: 'High',
         lastRefresh: '2026-04-16'
       },
       {
         id: 'M2',
-        flowName: 'Profitability Flow',
         measure: 'Contribution Margin',
+        flowName: 'Profitability Flow',
         domain: 'Finance',
         formula: 'Net Revenue - Variable Cost',
-        dependencies: ['Net Revenue', 'Variable Cost'],
-        usedBy: ['CM %', 'Profit Bridge'],
-        dataSource: 'SalesFact + CostFact',
-        aiReason: 'Contribution Margin isolates earning power before fixed overheads. It is used to compare product/channel health and guide tactical price-promo decisions.',
+        dependencies: ['Net Revenue','Variable Cost'],
+        usedBy: ['CM %','Profit Bridge'],
+        dependencyReason: {
+          'Net Revenue': 'Represents realized sales value to start margin logic.',
+          'Variable Cost': 'Captures cost directly tied to units sold.'
+        },
+        aiWhyCalculated: 'Calculated to isolate earning power before fixed overheads and to compare margin quality across channels/products.',
+        aiBusinessQuestion: 'Which products/channels are truly profitable at unit economics level?',
+        aiImpactIfMissing: 'Teams cannot reliably optimize mix, promotion, or pricing decisions.',
         confidence: 'High',
         lastRefresh: '2026-04-16'
       },
       {
         id: 'M3',
-        flowName: 'Distribution Flow',
         measure: 'Numeric Distribution %',
+        flowName: 'Distribution Flow',
         domain: 'Channel',
         formula: 'Active Outlets / Total Eligible Outlets',
-        dependencies: ['Active Outlets', 'Eligible Outlets'],
-        usedBy: ['Weighted Distribution', 'Reach Index'],
-        dataSource: 'OutletUniverse + SalesCoverage',
-        aiReason: 'Numeric Distribution % is calculated to show coverage breadth. It is a lead indicator for volume growth, especially in emerging channels.',
+        dependencies: ['Active Outlets','Eligible Outlets'],
+        usedBy: ['Weighted Distribution','Reach Index'],
+        dependencyReason: {
+          'Active Outlets': 'Counts points of sale where product is actually selling.',
+          'Eligible Outlets': 'Defines addressable universe for fair coverage percentage.'
+        },
+        aiWhyCalculated: 'Calculated to measure coverage breadth and identify white-space opportunities for channel expansion.',
+        aiBusinessQuestion: 'Are we present in enough outlets to unlock growth?',
+        aiImpactIfMissing: 'Sales gaps may be misread as demand issues instead of distribution gaps.',
         confidence: 'Medium',
         lastRefresh: '2026-04-15'
       },
       {
         id: 'M4',
-        flowName: 'Forecast Flow',
         measure: 'Forecast Accuracy',
+        flowName: 'Planning Flow',
         domain: 'Supply',
         formula: '1 - ABS(Forecast - Actual)/Actual',
-        dependencies: ['Forecast Volume', 'Actual Volume'],
-        usedBy: ['Inventory Risk', 'Bias Index'],
-        dataSource: 'DemandPlan + Sellout',
-        aiReason: 'Forecast Accuracy is calculated to quantify planning quality. Low accuracy increases inventory and service risk, so this metric directly influences replenishment governance.',
+        dependencies: ['Forecast Volume','Actual Volume'],
+        usedBy: ['Inventory Risk','Bias Index'],
+        dependencyReason: {
+          'Forecast Volume': 'Planned demand baseline from planning cycle.',
+          'Actual Volume': 'Observed reality used as ground-truth benchmark.'
+        },
+        aiWhyCalculated: 'Calculated to quantify planning reliability; lower values indicate greater inventory and service-level risk.',
+        aiBusinessQuestion: 'How reliable is our planning signal for replenishment and inventory decisions?',
+        aiImpactIfMissing: 'Higher stockouts/overstock risk with no early warning metric.',
         confidence: 'Medium',
         lastRefresh: '2026-04-14'
       }
     ];
 
     const cardsEl = document.getElementById('cards');
-    const searchInput = document.getElementById('searchInput');
+    const searchEl = document.getElementById('searchInput');
     const tabs = document.querySelectorAll('.tab');
     const panes = {
       info: document.getElementById('infoPane'),
-      dependency: document.getElementById('dependencyPane'),
+      flow: document.getElementById('flowPane'),
       related: document.getElementById('relatedPane')
     };
 
     let selectedId = measureFlows[0].id;
 
-    function renderCards(list = measureFlows) {
-      cardsEl.innerHTML = list.map(item => {
-        const active = item.id === selectedId ? 'active' : '';
-        return `
-          <article class="flow-card ${active}" data-id="${item.id}">
-            <div class="card-top">
-              <div class="metric">${item.measure}</div>
-              <span class="chip">${item.domain}</span>
-            </div>
-            <div class="meta">
-              <span><strong>Flow:</strong> ${item.flowName}</span>
-              <span><strong>Depends on:</strong> ${item.dependencies.length}</span>
-              <span><strong>Used by:</strong> ${item.usedBy.length}</span>
-            </div>
-          </article>
-        `;
-      }).join('');
+    function selected(){ return measureFlows.find(x => x.id === selectedId); }
 
-      cardsEl.querySelectorAll('.flow-card').forEach(card => {
-        card.addEventListener('click', () => {
-          selectedId = card.dataset.id;
+    function renderCards(list){
+      cardsEl.innerHTML = list.map(item => `
+        <article class="flow-card ${item.id===selectedId?'active':''}" data-id="${item.id}">
+          <div class="card-head">
+            <div>
+              <div class="measure">${item.measure}</div>
+              <div class="muted">${item.flowName}</div>
+            </div>
+            <span class="domain">${item.domain}</span>
+          </div>
+          <div class="mini"><strong>AI Why:</strong> ${item.aiWhyCalculated}</div>
+          <div class="muted" style="margin-top:8px"><strong>Depends:</strong> ${item.dependencies.join(', ')}</div>
+        </article>
+      `).join('');
+
+      cardsEl.querySelectorAll('.flow-card').forEach(c => {
+        c.addEventListener('click', () => {
+          selectedId = c.dataset.id;
           renderCards(list);
-          renderDetail(getSelected());
+          renderDetails(selected());
           setTab('info');
         });
       });
     }
 
-    function getSelected() {
-      return measureFlows.find(m => m.id === selectedId);
-    }
-
-    function renderDetail(item) {
-      if (!item) {
-        Object.values(panes).forEach(el => {
-          el.innerHTML = '<div class="empty">No measure selected.</div>';
-        });
+    function renderDetails(item){
+      if(!item){
+        Object.values(panes).forEach(p => p.innerHTML = '<div class="empty">No record found for the current filter.</div>');
         return;
       }
 
@@ -333,70 +204,80 @@
           <div><strong>Flow:</strong> ${item.flowName}</div>
           <div><strong>Domain:</strong> ${item.domain}</div>
           <div><strong>Formula:</strong> ${item.formula}</div>
-          <div><strong>Data Source:</strong> ${item.dataSource}</div>
           <div><strong>Last Refresh:</strong> ${item.lastRefresh}</div>
-          <div><strong>AI Confidence:</strong> <span class="${item.confidence === 'High' ? 'status-good' : 'status-warn'}">${item.confidence}</span></div>
+          <div><strong>AI Confidence:</strong> <span class="${item.confidence==='High'?'ok':'warn'}">${item.confidence}</span></div>
         </div>
 
-        <div class="label">AI-Based Why This Is Calculated</div>
-        <div class="box">${item.aiReason}</div>
+        <div class="section">
+          <p class="label">AI-based why it is calculated</p>
+          <div class="box">${item.aiWhyCalculated}</div>
+        </div>
+
+        <div class="section">
+          <p class="label">Business question answered</p>
+          <div class="box">${item.aiBusinessQuestion}</div>
+        </div>
+
+        <div class="section">
+          <p class="label">Risk if this measure is removed</p>
+          <div class="box">${item.aiImpactIfMissing}</div>
+        </div>
       `;
 
-      const dependencyChain = [...item.dependencies, item.measure, ...item.usedBy];
-      panes.dependency.innerHTML = `
+      const chain = [...item.dependencies, item.measure, ...item.usedBy];
+      panes.flow.innerHTML = `
         <h2 class="h2">Dependency Flow: ${item.measure}</h2>
-        <div class="label">End-to-end chain</div>
-        <div class="flow">
-          ${dependencyChain.map((node, idx) => `
-            <span class="node">${node}</span>${idx < dependencyChain.length - 1 ? '<span class="arrow">→</span>' : ''}
-          `).join('')}
-        </div>
+        <p class="label">End-to-end dependency chain</p>
+        <div class="flow-line">${chain.map((n,i) => `<span class="node">${n}</span>${i<chain.length-1?'<span class="arrow">→</span>':''}`).join('')}</div>
 
-        <div class="label">Input Dependencies</div>
-        <div class="box">
-          <ul class="list">
-            ${item.dependencies.map(dep => `<li>${dep}</li>`).join('')}
-          </ul>
+        <div class="section">
+          <p class="label">AI explanation for each dependency</p>
+          <table class="table">
+            <thead><tr><th>Dependency</th><th>Why it is needed</th></tr></thead>
+            <tbody>
+              ${item.dependencies.map(d => `<tr><td>${d}</td><td>${item.dependencyReason[d] || 'Required input for measure computation.'}</td></tr>`).join('')}
+            </tbody>
+          </table>
         </div>
       `;
 
       panes.related.innerHTML = `
         <h2 class="h2">Related Measures</h2>
-        <div class="label">Upstream (what this needs)</div>
-        <div class="box">
-          <ul class="list">${item.dependencies.map(dep => `<li>${dep}</li>`).join('')}</ul>
+        <div class="section">
+          <p class="label">Upstream inputs</p>
+          <div class="box"><ul class="list">${item.dependencies.map(d => `<li>${d}</li>`).join('')}</ul></div>
         </div>
-
-        <div class="label">Downstream (what uses this)</div>
-        <div class="box">
-          <ul class="list">${item.usedBy.map(dep => `<li>${dep}</li>`).join('')}</ul>
+        <div class="section">
+          <p class="label">Downstream outputs using this measure</p>
+          <div class="box"><ul class="list">${item.usedBy.map(d => `<li>${d}</li>`).join('')}</ul></div>
         </div>
       `;
     }
 
-    function setTab(tab) {
-      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-      Object.entries(panes).forEach(([key, pane]) => pane.parentElement.querySelector(`#${key}Pane`).classList.toggle('active', key === tab));
+    function setTab(key){
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === key));
+      Object.entries(panes).forEach(([k,p]) => p.classList.toggle('active', k===key));
     }
 
-    tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+    tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
 
-    searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      const filtered = measureFlows.filter(item =>
-        [item.measure, item.flowName, item.domain, ...item.dependencies, ...item.usedBy]
-          .join(' ')
-          .toLowerCase()
-          .includes(q)
-      );
+    function filterList(){
+      const q = searchEl.value.trim().toLowerCase();
+      const list = measureFlows.filter(item => [
+        item.measure, item.flowName, item.domain, item.formula,
+        item.aiWhyCalculated, item.aiBusinessQuestion, item.aiImpactIfMissing,
+        ...item.dependencies, ...item.usedBy
+      ].join(' ').toLowerCase().includes(q));
 
-      if (!filtered.some(f => f.id === selectedId) && filtered.length) selectedId = filtered[0].id;
-      renderCards(filtered);
-      renderDetail(filtered.find(f => f.id === selectedId) || null);
-    });
+      if(list.length && !list.some(x => x.id === selectedId)) selectedId = list[0].id;
+      renderCards(list);
+      renderDetails(list.find(x => x.id === selectedId) || null);
+    }
 
-    renderCards();
-    renderDetail(getSelected());
+    searchEl.addEventListener('input', filterList);
+
+    renderCards(measureFlows);
+    renderDetails(selected());
   </script>
 </body>
 </html>
